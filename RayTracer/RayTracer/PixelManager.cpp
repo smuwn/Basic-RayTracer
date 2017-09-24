@@ -49,6 +49,8 @@ void PixelManager::End( )
 
 void PixelManager::Point( float x, float y, float r, float g, float b )
 {
+	x += 1;
+	y = mWindowHeight - y;
 	x -= mHalfWindowWidth;
 	y -= mHalfWindowHeight;
 	x /= mHalfWindowWidth;

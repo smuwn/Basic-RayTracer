@@ -30,14 +30,14 @@ bool CInput::Initialize( HINSTANCE hInstance, HWND hWnd )
 	if ( FAILED( hr ) )
 		return false;
 	
-	hr = m_Mouse->SetCooperativeLevel( hWnd, DISCL_FOREGROUND | DISCL_EXCLUSIVE );
+	hr = m_Mouse->SetCooperativeLevel( hWnd, DISCL_FOREGROUND | DISCL_NONEXCLUSIVE );
 	if ( FAILED( hr ) )
 		return false;
 	hr = m_Mouse->SetDataFormat( &c_dfDIMouse );
 	if ( FAILED( hr ) )
 		return false;
 
-	hr = m_Keyboard->SetCooperativeLevel( hWnd, DISCL_FOREGROUND | DISCL_NOWINKEY | DISCL_EXCLUSIVE );
+	hr = m_Keyboard->SetCooperativeLevel( hWnd, DISCL_FOREGROUND | DISCL_NOWINKEY | DISCL_NONEXCLUSIVE );
 	if ( FAILED( hr ) )
 		return false;
 	hr = m_Keyboard->SetDataFormat( &c_dfDIKeyboard );

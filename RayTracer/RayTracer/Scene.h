@@ -5,6 +5,7 @@
 #include "HRTimer.h"
 #include "Shader.h"
 #include "PixelManager.h"
+#include "Shapes.h"
 
 ALIGN16 class Scene
 {

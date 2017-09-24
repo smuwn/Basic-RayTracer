@@ -11,7 +11,7 @@ Scene::Scene( HINSTANCE Instance, bool bFullscreen ) :
 		InitD3D( bFullscreen );
 		mShader = std::make_shared<Shader>( mDevice, mImmediateContext );
 		mPixels = std::make_unique<PixelManager>( mDevice, mImmediateContext, mShader,
-			mWidth * mHeight, mWidth, mHeight );
+			( mWidth + 1 ) * ( mHeight + 1 ), mWidth, mHeight );
 	}
 	CATCH;
 }
@@ -216,14 +216,44 @@ void Scene::Update( )
 
 void Scene::Render( )
 {
+	using namespace DirectX;
 	static FLOAT BackColor[ 4 ] = { 0,0,0,0 };
 	EnableBackbuffer( );
 	mImmediateContext->ClearRenderTargetView( mBackbuffer.Get( ), BackColor );
 
+	static Sphere sp( XMFLOAT3( 0.0f, -3.0f, 5.0f ), 1.0f );
+
+	XMVECTOR CamPos = XMVectorSet( 0.0f, 0.0f, 0.0f, 1.0f );
+	XMVECTOR ViewDir = XMVectorSet( 0.0f, 0.0f, 1.0f, 0.0f );
+	float screenDistance = 1.0f;
+
+	XMVECTOR ScreenCenter = CamPos + screenDistance * ViewDir;
+	XMVECTOR P0 = ScreenCenter + XMVectorSet( -1, 1, 0, 0 ); // Top-left
+	XMVECTOR P1 = ScreenCenter + XMVectorSet( 1, 1, 0, 0 ); // Top-right
+	XMVECTOR P2 = ScreenCenter + XMVectorSet( -1, -1, 0, 0 ); // Bottom-left
+
+
+	XMVECTOR PointOnScreen;
+	XMVECTOR RayDirection;
 	mPixels->Begin( );
-	for ( int i = 0; i < mWidth; ++i )
-		for ( int j = 0; j < mHeight; ++j )
-				mPixels->Point( float( i ), float( j ), 1.0f, 1.0f, 0.0f );
+	for ( int y = 0; y < mHeight; ++y )
+		for ( int x = 0; x < mWidth; ++x )
+		{
+			float u = float( x ) / float( mWidth );
+			float v = float( y ) / float( mHeight );
+			PointOnScreen = P0 + ( P1 - P0 ) * u + ( P2 - P0 ) * v;
+			RayDirection = XMVector3Normalize( PointOnScreen - CamPos );
+			Ray r;
+			XMStoreFloat3( &r.mDirection, RayDirection );
+			XMStoreFloat3( &r.mStart, CamPos );
+			r.mLength = 100000.0f;
+			if ( sp.Intersect( r ) )
+				mPixels->Point( x, y, 1.0f, 1.0f, 0.0f );
+		}
+	for ( int x = 0; x < mWidth; ++x )
+	{
+		mPixels->Point( x, mWidth - 1, 1.0f, 1.0f, 1.0f );
+	}
 	mPixels->End( );
 	mPixels->Render( );
 	mSwapChain->Present( 0, 0 );

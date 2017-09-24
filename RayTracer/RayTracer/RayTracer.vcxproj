@@ -130,10 +130,12 @@
     <ClInclude Include="HRTimer.h" />
     <ClInclude Include="Input.h" />
     <ClInclude Include="PixelManager.h" />
+    <ClInclude Include="Ray.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="Scene.h" />
     <ClInclude Include="Shader.h" />
     <ClInclude Include="ShaderHelper.h" />
+    <ClInclude Include="Shapes.h" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="PixelShader.hlsl">
