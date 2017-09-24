@@ -69,7 +69,14 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
-  <PropertyGroup />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <IncludePath>$(IncludePath);$(DXSDK_DIR)Include</IncludePath>
+    <LibraryPath>$(LibraryPath);$(DXSDK_DIR)Lib\x86</LibraryPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <IncludePath>$(IncludePath);$(DXSDK_DIR)Include</IncludePath>
+    <LibraryPath>$(LibraryPath);$(DXSDK_DIR)Lib\x86</LibraryPath>
+  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
@@ -111,6 +118,16 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="HRTimer.cpp" />
+    <ClCompile Include="Input.cpp" />
+    <ClCompile Include="Scene.cpp" />
+    <ClCompile Include="winmain.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="commonincludes.h" />
+    <ClInclude Include="HRTimer.h" />
+    <ClInclude Include="Input.h" />
+    <ClInclude Include="Scene.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
