@@ -7,7 +7,7 @@ int WINAPI wWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 #if DEBUG || _DEBUG
 		false
 #else
-		true
+		false
 #endif
 		);
 	SC->Run( );
