@@ -4,7 +4,7 @@
 #include "Input.h"
 #include "HRTimer.h"
 
-class Scene
+ALIGN16 class Scene
 {
 private:
 	static constexpr const float NearZ = 0.1f;
@@ -45,5 +45,14 @@ private:
 	void Render( );
 public:
 	static LRESULT CALLBACK WndProc( HWND hWnd, UINT Message, WPARAM wParam, LPARAM lParam );
+public:
+	inline void* operator new( size_t size )
+	{
+		return _aligned_malloc( size, 16 );
+	}
+	inline void operator delete( void* object )
+	{
+		return _aligned_free( object );
+	}
 };
 

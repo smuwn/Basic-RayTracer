@@ -3,7 +3,13 @@
 int WINAPI wWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 	LPWSTR lpCmdLine, int iShow )
 {
-	Scene* SC = new Scene( hInstance );
+	Scene* SC = new Scene( hInstance,
+#if DEBUG || _DEBUG
+		false
+#else
+		true
+#endif
+		);
 	SC->Run( );
 	delete SC;
 }
