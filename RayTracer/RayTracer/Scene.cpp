@@ -212,6 +212,49 @@ void Scene::Update( )
 {
 	mTimer.Frame( );
 	mInput->Frame( );
+	
+
+	mRotationY += mInput->GetHorizontalMouseMove( ) * 0.001f;
+	mRotationX += mInput->GetVerticalMouseMove( ) * 0.001f;
+
+	DirectX::XMMATRIX Rotation = DirectX::XMMatrixRotationX( mRotationX ) * DirectX::XMMatrixRotationY( mRotationY );
+	DirectX::XMVECTOR Forward, Right;
+	Forward = DirectX::XMVector3TransformCoord(
+		DirectX::XMVectorSet( 0.0f, 0.0f, 1.0f, 0.0f ),
+		Rotation );
+	Right = DirectX::XMVector3TransformCoord(
+		DirectX::XMVectorSet( 1.0f, 0.0f, 0.0f, 0.0f ),
+		Rotation );
+	
+
+	if ( mInput->isKeyPressed( DIK_W ) )
+	{
+		DirectX::XMVECTOR CamPos;
+		CamPos = DirectX::XMLoadFloat3( &mCamPos );
+		CamPos = DirectX::XMVectorAdd( CamPos, Forward );
+		DirectX::XMStoreFloat3( &mCamPos, CamPos );
+	}
+	if ( mInput->isKeyPressed( DIK_S ) )
+	{
+		DirectX::XMVECTOR CamPos;
+		CamPos = DirectX::XMLoadFloat3( &mCamPos );
+		CamPos = DirectX::XMVectorSubtract( CamPos, Forward );
+		DirectX::XMStoreFloat3( &mCamPos, CamPos );
+	}
+	if ( mInput->isKeyPressed( DIK_A ) )
+	{
+		DirectX::XMVECTOR CamPos;
+		CamPos = DirectX::XMLoadFloat3( &mCamPos );
+		CamPos = DirectX::XMVectorSubtract( CamPos, Right );
+		DirectX::XMStoreFloat3( &mCamPos, CamPos );
+	}
+	if ( mInput->isKeyPressed( DIK_D ) )
+	{
+		DirectX::XMVECTOR CamPos;
+		CamPos = DirectX::XMLoadFloat3( &mCamPos );
+		CamPos = DirectX::XMVectorAdd( CamPos, Right );
+		DirectX::XMStoreFloat3( &mCamPos, CamPos );
+	}
 }
 
 void Scene::Render( )
@@ -221,26 +264,30 @@ void Scene::Render( )
 	EnableBackbuffer( );
 	mImmediateContext->ClearRenderTargetView( mBackbuffer.Get( ), BackColor );
 
-	static Sphere sp( XMFLOAT3( 0.0f, -3.0f, 5.0f ), 1.0f );
+	XMMATRIX Rotation = XMMatrixRotationX( mRotationX ) * XMMatrixRotationY( mRotationY );
 
-	XMVECTOR CamPos = XMVectorSet( 0.0f, 0.0f, 0.0f, 1.0f );
-	XMVECTOR ViewDir = XMVectorSet( 0.0f, 0.0f, 1.0f, 0.0f );
+	static Sphere sp( XMFLOAT3( 0.0f, 1.0f, 5.0f ), 1.0f );
+	static Sphere sp1( XMFLOAT3( 1.0f, 1.0f, 8.0f ), 1.0f );
+	static Sphere sp2( XMFLOAT3( 0.0f, -100.0f, 0.0f ), 100.0f );
+
+	XMVECTOR CamPos = XMLoadFloat3( &mCamPos );
+	XMVECTOR ViewDir = XMVector3TransformCoord( XMVectorSet( 0.0f, 0.0f, 1.0f, 0.0f ), Rotation );
 	float screenDistance = 1.0f;
 
 	XMVECTOR ScreenCenter = CamPos + screenDistance * ViewDir;
-	XMVECTOR P0 = ScreenCenter + XMVectorSet( -1, 1, 0, 0 ); // Top-left
-	XMVECTOR P1 = ScreenCenter + XMVectorSet( 1, 1, 0, 0 ); // Top-right
-	XMVECTOR P2 = ScreenCenter + XMVectorSet( -1, -1, 0, 0 ); // Bottom-left
+	XMVECTOR P0 = ScreenCenter + XMVector3TransformCoord( XMVectorSet( -1, 1, 0, 0 ), Rotation ); // Top-left
+	XMVECTOR P1 = ScreenCenter + XMVector3TransformCoord( XMVectorSet( 1, 1, 0, 0 ), Rotation ); // Top-right
+	XMVECTOR P2 = ScreenCenter + XMVector3TransformCoord( XMVectorSet( -1, -1, 0, 0 ), Rotation ); // Bottom-left
 
 
 	XMVECTOR PointOnScreen;
 	XMVECTOR RayDirection;
 	mPixels->Begin( );
-	for ( int y = 0; y < mHeight; ++y )
-		for ( int x = 0; x < mWidth; ++x )
+	for ( float y = 0; y < mHeight; ++y )
+		for ( float x = 0; x < mWidth; ++x )
 		{
-			float u = float( x ) / float( mWidth );
-			float v = float( y ) / float( mHeight );
+			float u = x / mWidth;
+			float v = y / mHeight;
 			PointOnScreen = P0 + ( P1 - P0 ) * u + ( P2 - P0 ) * v;
 			RayDirection = XMVector3Normalize( PointOnScreen - CamPos );
 			Ray r;
@@ -249,11 +296,11 @@ void Scene::Render( )
 			r.mLength = 100000.0f;
 			if ( sp.Intersect( r ) )
 				mPixels->Point( x, y, 1.0f, 1.0f, 0.0f );
+			if ( sp1.Intersect( r ) )
+				mPixels->Point( x, y, 0.0f, 1.0f, 0.0f );
+			if ( sp2.Intersect( r ) )
+				mPixels->Point( x, y, 0.0f, 1.0f, 1.0f );
 		}
-	for ( int x = 0; x < mWidth; ++x )
-	{
-		mPixels->Point( x, mWidth - 1, 1.0f, 1.0f, 1.0f );
-	}
 	mPixels->End( );
 	mPixels->Render( );
 	mSwapChain->Present( 0, 0 );

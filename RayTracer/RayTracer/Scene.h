@@ -26,6 +26,11 @@ private:
 
 	std::shared_ptr<Shader> mShader;
 
+	DirectX::XMFLOAT3 mCamPos;
+
+	float mRotationX;
+	float mRotationY;
+
 private: // D3D objects
 	Microsoft::WRL::ComPtr<ID3D11Device> mDevice;
 	Microsoft::WRL::ComPtr<ID3D11DeviceContext> mImmediateContext;
