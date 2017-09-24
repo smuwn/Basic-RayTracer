@@ -3,13 +3,11 @@
 #include "commonincludes.h"
 #include "Input.h"
 #include "HRTimer.h"
+#include "Shader.h"
+#include "PixelManager.h"
 
 ALIGN16 class Scene
 {
-private:
-	static constexpr const float NearZ = 0.1f;
-	static constexpr const float FarZ = 500.0f;
-	static constexpr const float FOV = ( float ) D3DX_PI / 4.0f;
 private:
 	HWND mWindow;
 	HINSTANCE mInstance;
@@ -21,10 +19,11 @@ private:
 	int mWidth;
 	int mHeight;
 
+	std::unique_ptr<PixelManager> mPixels;
 
 	std::shared_ptr<CInput> mInput;
 
-	DirectX::XMMATRIX mOrthoMatrix;
+	std::shared_ptr<Shader> mShader;
 
 private: // D3D objects
 	Microsoft::WRL::ComPtr<ID3D11Device> mDevice;

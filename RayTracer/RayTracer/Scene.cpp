@@ -9,8 +9,9 @@ Scene::Scene( HINSTANCE Instance, bool bFullscreen ) :
 	{
 		InitWindow( bFullscreen );
 		InitD3D( bFullscreen );
-		mOrthoMatrix = DirectX::XMMatrixOrthographicLH( ( float ) mWidth, ( float ) mHeight, NearZ, FarZ );
-		mInput->addSpecialKey( DIK_B );
+		mShader = std::make_shared<Shader>( mDevice, mImmediateContext );
+		mPixels = std::make_unique<PixelManager>( mDevice, mImmediateContext, mShader,
+			mWidth * mHeight, mWidth, mHeight );
 	}
 	CATCH;
 }
@@ -18,6 +19,13 @@ Scene::Scene( HINSTANCE Instance, bool bFullscreen ) :
 
 Scene::~Scene( )
 {
+	mDevice.Reset( );
+	mImmediateContext.Reset( );
+	mBackbuffer.Reset( );
+	mSwapChain.Reset( );
+
+	mInput.reset( );
+
 	UnregisterClass( ENGINE_NAME, mInstance );
 	DestroyWindow( mWindow );
 }
@@ -212,5 +220,11 @@ void Scene::Render( )
 	EnableBackbuffer( );
 	mImmediateContext->ClearRenderTargetView( mBackbuffer.Get( ), BackColor );
 
-	mSwapChain->Present( 1, 0 );
+	mPixels->Begin( );
+	for ( int i = 0; i < mWidth; ++i )
+		for ( int j = 0; j < mHeight; ++j )
+				mPixels->Point( float( i ), float( j ), 1.0f, 1.0f, 0.0f );
+	mPixels->End( );
+	mPixels->Render( );
+	mSwapChain->Present( 0, 0 );
 }
