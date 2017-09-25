@@ -8,15 +8,18 @@ class IShape
 {
 public:
 	virtual bool Intersect( Ray& r ) = 0;
+	virtual DirectX::XMFLOAT3 GetColor( ) = 0;
+	virtual DirectX::XMFLOAT3 GetCenter( ) = 0;
 };
 
 class Sphere : IShape
 {
 public:
 	Sphere( ) = default;
-	Sphere( DirectX::XMFLOAT3 Center, float Radius ) :
-		mCenter( Center ), mRadius( Radius ) {};
+	Sphere( DirectX::XMFLOAT3 Center, float Radius, DirectX::XMFLOAT3 Color ) :
+		mCenter( Center ), mRadius( Radius ), mColor( Color ) {};
 	DirectX::XMFLOAT3 mCenter;
+	DirectX::XMFLOAT3 mColor;
 	float mRadius;
 public:
 	bool Intersect( Ray& r )
@@ -42,6 +45,14 @@ public:
 		r.mLength = newLength;
 
 		return true;
+	}
+	DirectX::XMFLOAT3 GetColor( )
+	{
+		return mColor;
+	}
+	DirectX::XMFLOAT3 GetCenter( )
+	{
+		return mCenter;
 	}
 };
 

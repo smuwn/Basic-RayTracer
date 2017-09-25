@@ -129,6 +129,7 @@
     <ClInclude Include="commonincludes.h" />
     <ClInclude Include="HRTimer.h" />
     <ClInclude Include="Input.h" />
+    <ClInclude Include="Light.h" />
     <ClInclude Include="PixelManager.h" />
     <ClInclude Include="Ray.h" />
     <ClInclude Include="resource.h" />

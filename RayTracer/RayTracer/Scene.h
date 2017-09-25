@@ -6,6 +6,7 @@
 #include "Shader.h"
 #include "PixelManager.h"
 #include "Shapes.h"
+#include "Light.h"
 
 ALIGN16 class Scene
 {
@@ -31,6 +32,9 @@ private:
 	float mRotationX;
 	float mRotationY;
 
+	std::vector<IShape*> mShapes;
+	std::vector<Light> mLights;
+
 private: // D3D objects
 	Microsoft::WRL::ComPtr<ID3D11Device> mDevice;
 	Microsoft::WRL::ComPtr<ID3D11DeviceContext> mImmediateContext;
@@ -48,6 +52,7 @@ private:
 	void EnableBackbuffer( );
 	void Update( );
 	void Render( );
+	DirectX::XMFLOAT3 CalculateColor( Ray const& R, int hitIndex );
 public:
 	static LRESULT CALLBACK WndProc( HWND hWnd, UINT Message, WPARAM wParam, LPARAM lParam );
 public:
