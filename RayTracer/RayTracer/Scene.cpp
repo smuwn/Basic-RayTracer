@@ -9,15 +9,17 @@ Scene::Scene( HINSTANCE Instance, bool bFullscreen ) :
 	{
 		InitWindow( bFullscreen );
 		InitD3D( bFullscreen );
+		mCamPos = DirectX::XMFLOAT3( 0.0f, 0.0f, -2.0f );
 		mShader = std::make_shared<Shader>( mDevice, mImmediateContext );
 		mPixels = std::make_unique<PixelManager>( mDevice, mImmediateContext, mShader,
 			( mWidth + 1 ) * ( mHeight + 1 ), mWidth, mHeight );
-		Sphere *sp = new Sphere( DirectX::XMFLOAT3( 0.0f, 1.0f, 0.0f ), 1.0f, DirectX::XMFLOAT3( 1.0f, 1.0f, 0.0f ) );
+		Sphere *sp = new Sphere( DirectX::XMFLOAT3( 0.0f, 1.0f, 0.0f ), 1.0f, DirectX::XMFLOAT3( 1.0f, 1.0f, 1.0f ) );
 		mShapes.push_back( reinterpret_cast< IShape* >( sp ) );
 		sp = new Sphere( DirectX::XMFLOAT3( 0.0f, -500.0f, 0.0f ), 500.0f, DirectX::XMFLOAT3( 0.0f, 1.0f, 0.0f ) );
 		mShapes.push_back( reinterpret_cast< IShape* >( sp ) );
-		mLights.emplace_back( DirectX::XMFLOAT3( 0.0f, 3.0f, 0.0f ), DirectX::XMFLOAT3( 1.0f, 1.0f, 1.0f ) );
-		mLights.emplace_back( DirectX::XMFLOAT3( 3.0f, 2.0f, 0.0f ), DirectX::XMFLOAT3( 0.0f, 1.0f, 1.0f ) );
+		mLights.emplace_back( DirectX::XMFLOAT3( 3.0f, 2.0f, 0.0f ), DirectX::XMFLOAT3( 1.0f, 1.0f, 1.0f ) );
+		mLights.emplace_back( DirectX::XMFLOAT3( 2.0f, 2.0f, 3.0f ), DirectX::XMFLOAT3( 1.0f, 1.0f, 1.0f ) );
+		mAmbient = DirectX::XMFLOAT3( 0.2f, 0.2f, 0.2f );
 	}
 	CATCH;
 }
@@ -304,7 +306,7 @@ void Scene::Render( )
 			Ray r;
 			XMStoreFloat3( &r.mDirection, RayDirection );
 			XMStoreFloat3( &r.mStart, CamPos );
-			r.mLength = 100000.0f;
+			r.mLength = MAX_DISTANCE;
 			int hitIndex = -1;
 			for ( size_t i = 0; i < mShapes.size( ); ++i )
 			{
@@ -315,6 +317,7 @@ void Scene::Render( )
 			}
 			if ( hitIndex != -1 )
 			{
+				
 				DirectX::XMFLOAT3 Color = CalculateColor( r, hitIndex );
 				mPixels->Point( x, y, Color.x, Color.y, Color.z );
 			}
@@ -334,21 +337,43 @@ DirectX::XMFLOAT3 Scene::CalculateColor( Ray const& r, int hitIndex )
 
 	XMVECTOR sphereCenter = XMLoadFloat3( &mShapes[ hitIndex ]->GetCenter( ) );
 	XMVECTOR Normal = HitPoint - sphereCenter;
+	Normal = XMVector3Normalize( Normal );
 
-	XMVECTOR InverseLightDir, LightPos, LightColor;
+	XMVECTOR InverseLightDir, LightPos, LightColor, ToLight;
 	XMVECTOR FinalColor = XMVectorSet( 0.0f, 0.0f, 0.0f, 0.0f );
 	XMVECTOR ObjectColor = XMLoadFloat3( &mShapes[ hitIndex ]->GetColor( ) );
 	for ( size_t i = 0; i < mLights.size( ); ++i )
 	{
-		LightColor = DirectX::XMLoadFloat3( &mLights[ i ].mDiffuse );
 		LightPos = DirectX::XMLoadFloat3( &mLights[ i ].mPosition );
-		InverseLightDir = LightPos - HitPoint;
-		float D = XMVectorGetX( XMVector3Dot( InverseLightDir, Normal ) );
-		if ( D > 0.0f )
+		bool bIsInShadow = false;
+		ToLight = LightPos - HitPoint;
+		for ( size_t j = 0; j < mShapes.size( ); ++j )
 		{
-			FinalColor += LightColor * D;
+			XMFLOAT3 NewRayPos, NewRayDir;
+			XMStoreFloat3( &NewRayPos, HitPoint );
+			XMStoreFloat3( &NewRayDir, XMVector3Normalize( ToLight ) );
+			Ray r( NewRayPos, NewRayDir, MAX_DISTANCE );
+			if ( mShapes[ j ]->Intersect( r ) )
+			{
+				bIsInShadow = true;
+				break;
+			}
+		}
+
+		if ( !bIsInShadow )
+		{
+			LightColor = DirectX::XMLoadFloat3( &mLights[ i ].mDiffuse );
+			InverseLightDir = LightPos - HitPoint;
+			InverseLightDir = XMVector3Normalize( InverseLightDir );
+			float D = XMVectorGetX( XMVector3Dot( InverseLightDir, Normal ) );
+			if ( D > 0.0f )
+			{
+				FinalColor += LightColor * D;
+			}
 		}
 	}
+	XMVECTOR Ambient = XMLoadFloat3( &mAmbient );
+	FinalColor += Ambient;
 
 	FinalColor = XMVectorSaturate( FinalColor );
 	FinalColor *= ObjectColor;

@@ -10,6 +10,7 @@
 
 ALIGN16 class Scene
 {
+	static constexpr const float MAX_DISTANCE = 1000000.0f;
 private:
 	HWND mWindow;
 	HINSTANCE mInstance;
@@ -28,6 +29,8 @@ private:
 	std::shared_ptr<Shader> mShader;
 
 	DirectX::XMFLOAT3 mCamPos;
+	
+	DirectX::XMFLOAT3 mAmbient;
 
 	float mRotationX;
 	float mRotationY;
