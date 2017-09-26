@@ -420,16 +420,19 @@ bool Scene::Trace( Ray& r, DirectX::XMFLOAT3& Color, const int depth )
 		XMStoreFloat3( &nR.mStart, HitPoint );
 		nR.mLength = MAX_DISTANCE;
 		XMFLOAT3 ReflectionColor;
+		float Reflectivity = mShapes[ hitIndex ]->GetReflectivity( );
 		if ( !Trace( nR, ReflectionColor, depth + 1 ) )
 		{
 			Color = CalculateColor( r, hitIndex );
+			Color.x *= ( 1.0f - Reflectivity );
+			Color.y *= ( 1.0f - Reflectivity );
+			Color.z *= ( 1.0f - Reflectivity );
 			return true;
 		}
 
 		XMVECTOR RColor = XMLoadFloat3( &ReflectionColor );
 		XMVECTOR DColor = XMLoadFloat3( &CalculateColor( r, hitIndex ) );
 
-		float Reflectivity = mShapes[ hitIndex ]->GetReflectivity( );
 		DColor = ( 1.0f - Reflectivity ) * DColor + ( Reflectivity ) * RColor;
 		XMStoreFloat3( &Color, DColor );
 	}
