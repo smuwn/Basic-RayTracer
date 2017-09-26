@@ -8,6 +8,8 @@ class IShape
 {
 public:
 	virtual bool Intersect( Ray& r ) = 0;
+	virtual float GetTransparency( ) = 0;
+	virtual float GetReflectivity( ) = 0;
 	virtual DirectX::XMFLOAT3 GetColor( ) = 0;
 	virtual DirectX::XMFLOAT3 GetCenter( ) = 0;
 };
@@ -21,6 +23,8 @@ public:
 	DirectX::XMFLOAT3 mCenter;
 	DirectX::XMFLOAT3 mColor;
 	float mRadius;
+	float mTransparency = 0.0f;
+	float mReflectivity = 0.0f;
 public:
 	bool Intersect( Ray& r )
 	{
@@ -53,6 +57,14 @@ public:
 	DirectX::XMFLOAT3 GetCenter( )
 	{
 		return mCenter;
+	}
+	float GetTransparency( )
+	{
+		return mTransparency;
+	}
+	float GetReflectivity( )
+	{
+		return mReflectivity;
 	}
 };
 

@@ -11,6 +11,7 @@
 ALIGN16 class Scene
 {
 	static constexpr const float MAX_DISTANCE = 1000000.0f;
+	static constexpr const int MAX_DEPTH = 3;
 private:
 	HWND mWindow;
 	HINSTANCE mInstance;
@@ -56,6 +57,7 @@ private:
 	void Update( );
 	void Render( );
 	DirectX::XMFLOAT3 CalculateColor( Ray const& R, int hitIndex );
+	bool Trace( Ray & R, DirectX::XMFLOAT3& Color, const int depth = 0 );
 public:
 	static LRESULT CALLBACK WndProc( HWND hWnd, UINT Message, WPARAM wParam, LPARAM lParam );
 public:

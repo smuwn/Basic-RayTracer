@@ -13,12 +13,15 @@ Scene::Scene( HINSTANCE Instance, bool bFullscreen ) :
 		mShader = std::make_shared<Shader>( mDevice, mImmediateContext );
 		mPixels = std::make_unique<PixelManager>( mDevice, mImmediateContext, mShader,
 			( mWidth + 1 ) * ( mHeight + 1 ), mWidth, mHeight );
-		Sphere *sp = new Sphere( DirectX::XMFLOAT3( 0.0f, 1.0f, 0.0f ), 1.0f, DirectX::XMFLOAT3( 1.0f, 1.0f, 1.0f ) );
+		Sphere *sp = new Sphere( DirectX::XMFLOAT3( 0.0f, 5.0f, 5.0f ), 5.0f, DirectX::XMFLOAT3( 1.0f, 1.0f, 1.0f ) );
+		sp->mReflectivity = 0.5f;
 		mShapes.push_back( reinterpret_cast< IShape* >( sp ) );
 		sp = new Sphere( DirectX::XMFLOAT3( 0.0f, -500.0f, 0.0f ), 500.0f, DirectX::XMFLOAT3( 0.0f, 1.0f, 0.0f ) );
 		mShapes.push_back( reinterpret_cast< IShape* >( sp ) );
-		mLights.emplace_back( DirectX::XMFLOAT3( 3.0f, 2.0f, 0.0f ), DirectX::XMFLOAT3( 1.0f, 1.0f, 1.0f ) );
-		mLights.emplace_back( DirectX::XMFLOAT3( 2.0f, 2.0f, 3.0f ), DirectX::XMFLOAT3( 1.0f, 1.0f, 1.0f ) );
+		sp = new Sphere( DirectX::XMFLOAT3( 0.0f, 3.0f, -5.0f ), 3.0f, DirectX::XMFLOAT3( 1.0f, 0.0f, 0.0f ) );
+		sp->mReflectivity = 0.5f;
+		mShapes.push_back( reinterpret_cast< IShape* > ( sp ) );
+		mLights.emplace_back( DirectX::XMFLOAT3( 0.0f, 10.0f, 0.0f ), DirectX::XMFLOAT3( 1.0f, 1.0f, 1.0f ) );
 		mAmbient = DirectX::XMFLOAT3( 0.2f, 0.2f, 0.2f );
 	}
 	CATCH;
@@ -307,18 +310,9 @@ void Scene::Render( )
 			XMStoreFloat3( &r.mDirection, RayDirection );
 			XMStoreFloat3( &r.mStart, CamPos );
 			r.mLength = MAX_DISTANCE;
-			int hitIndex = -1;
-			for ( size_t i = 0; i < mShapes.size( ); ++i )
+			DirectX::XMFLOAT3 Color;
+			if ( Trace( r, Color ) )
 			{
-				if ( mShapes[ i ]->Intersect( r ) )
-				{
-					hitIndex = i;
-				}
-			}
-			if ( hitIndex != -1 )
-			{
-				
-				DirectX::XMFLOAT3 Color = CalculateColor( r, hitIndex );
 				mPixels->Point( x, y, Color.x, Color.y, Color.z );
 			}
 		}
@@ -382,4 +376,66 @@ DirectX::XMFLOAT3 Scene::CalculateColor( Ray const& r, int hitIndex )
 	XMStoreFloat3( &Color, FinalColor );
 
 	return Color;
+}
+
+bool Scene::Trace( Ray& r, DirectX::XMFLOAT3& Color, const int depth )
+{
+	int hitIndex = -1;
+	for ( size_t i = 0; i < mShapes.size( ); ++i )
+	{
+		if ( mShapes[ i ]->Intersect( r ) )
+			hitIndex = i;
+	}
+	if ( hitIndex == -1 )
+		return false;
+
+	if ( ( mShapes[ hitIndex ]->GetReflectivity( ) > 0 || mShapes[ hitIndex ]->GetTransparency( ) > 0 )
+		&& depth < MAX_DEPTH )
+	{
+		using namespace DirectX;
+
+		// c - current; n - new
+		XMVECTOR cRayDirection = XMLoadFloat3( &r.mDirection );
+		XMVECTOR cRayPosition = XMLoadFloat3( &r.mStart );
+
+		XMVECTOR RayStart = XMLoadFloat3( &r.mStart );
+		XMVECTOR RayDirection = XMLoadFloat3( &r.mDirection );
+		XMVECTOR HitPoint = RayStart + RayDirection * r.mLength;
+
+		XMVECTOR sphereCenter = XMLoadFloat3( &mShapes[ hitIndex ]->GetCenter( ) );
+		XMVECTOR Normal = HitPoint - sphereCenter;
+		Normal = XMVector3Normalize( Normal );
+		bool bInside = false;
+		if ( XMVectorGetX( XMVector3Dot( RayDirection, Normal ) ) > 0 )
+		{
+			Normal = -Normal;
+			bInside = true;
+		}
+		
+		XMVECTOR ReflectedDirection = XMVector3Reflect( RayDirection, Normal );
+
+		HitPoint = HitPoint + ReflectedDirection * 0.1f;
+		Ray nR;
+		XMStoreFloat3( &nR.mDirection, ReflectedDirection );
+		XMStoreFloat3( &nR.mStart, HitPoint );
+		nR.mLength = MAX_DISTANCE;
+		XMFLOAT3 ReflectionColor;
+		if ( !Trace( nR, ReflectionColor, depth + 1 ) )
+		{
+			Color = CalculateColor( r, hitIndex );
+			return true;
+		}
+
+		XMVECTOR RColor = XMLoadFloat3( &ReflectionColor );
+		XMVECTOR DColor = XMLoadFloat3( &CalculateColor( r, hitIndex ) );
+
+		float Reflectivity = mShapes[ hitIndex ]->GetReflectivity( );
+		DColor = ( 1.0f - Reflectivity ) * DColor + ( Reflectivity ) * RColor;
+		XMStoreFloat3( &Color, DColor );
+	}
+	else
+	{
+		Color = CalculateColor( r, hitIndex );
+	}
+	return true;
 }
