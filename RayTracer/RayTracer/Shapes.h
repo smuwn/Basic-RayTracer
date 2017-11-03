@@ -140,7 +140,7 @@ public:
 
 		float NormalDotDirection = XMVectorGetX( XMVector3Dot( Normal, RayDirection ) );
 
-		if ( NormalDotDirection < DX::EPSILON )
+		if ( fabs( NormalDotDirection ) < DX::EPSILON )
 			return false;
 
 		float d = XMVectorGetX( XMVector3Dot( Normal, PointInTriangle ) );
