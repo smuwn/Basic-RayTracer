@@ -21,8 +21,14 @@ Scene::Scene( HINSTANCE Instance, bool bFullscreen ) :
 		sp = new Sphere( DirectX::XMFLOAT3( 0.0f, 3.0f, -5.0f ), 3.0f, DirectX::XMFLOAT3( 1.0f, 0.0f, 0.0f ) );
 		sp->mReflectivity = 0.5f;
 		mShapes.push_back( reinterpret_cast< IShape* > ( sp ) );
-		mLights.emplace_back( DirectX::XMFLOAT3( 0.0f, 10.0f, 0.0f ), DirectX::XMFLOAT3( 1.0f, 1.0f, 1.0f ) );
+		mLights.emplace_back( DirectX::XMFLOAT3( 0.0f, 15.0f, 0.0f ), DirectX::XMFLOAT3( 1.0f, 1.0f, 1.0f ) );
+		mLights.emplace_back( DirectX::XMFLOAT3( 15.0f, 15.0f, 0.0f ), DirectX::XMFLOAT3( 1.0f, 1.0f, 0.0f ) );
 		mAmbient = DirectX::XMFLOAT3( 0.2f, 0.2f, 0.2f );
+
+		Triangle * t = new Triangle( DirectX::XMFLOAT3( 0.0f, 0.0f, 0.0f ),
+			DirectX::XMFLOAT3( 0.0f, 1.0f, 0.0f ), DirectX::XMFLOAT3( 1.0f, 0.0f, 0.0f ),
+			DirectX::XMFLOAT3( 0.0f, 0.0f, 1.0f ), DirectX::XMFLOAT3( 1.0f, 0.0f, 0.0f ) );
+		mShapes.push_back( reinterpret_cast< IShape* > ( t ) );
 	}
 	CATCH;
 }
@@ -329,8 +335,9 @@ DirectX::XMFLOAT3 Scene::CalculateColor( Ray const& r, int hitIndex )
 	XMVECTOR RayDirection = XMLoadFloat3( &r.mDirection );
 	XMVECTOR HitPoint = RayStart + RayDirection * r.mLength;
 
-	XMVECTOR sphereCenter = XMLoadFloat3( &mShapes[ hitIndex ]->GetCenter( ) );
-	XMVECTOR Normal = HitPoint - sphereCenter;
+	//XMVECTOR sphereCenter = XMLoadFloat3( &mShapes[ hitIndex ]->GetCenter( ) );
+	//XMVECTOR Normal = HitPoint - sphereCenter;
+	XMVECTOR Normal = mShapes[ hitIndex ]->GetNormal( HitPoint );
 	Normal = XMVector3Normalize( Normal );
 
 	XMVECTOR InverseLightDir, LightPos, LightColor, ToLight;
@@ -402,8 +409,7 @@ bool Scene::Trace( Ray& r, DirectX::XMFLOAT3& Color, const int depth )
 		XMVECTOR RayDirection = XMLoadFloat3( &r.mDirection );
 		XMVECTOR HitPoint = RayStart + RayDirection * r.mLength;
 
-		XMVECTOR sphereCenter = XMLoadFloat3( &mShapes[ hitIndex ]->GetCenter( ) );
-		XMVECTOR Normal = HitPoint - sphereCenter;
+		XMVECTOR Normal = mShapes[ hitIndex ]->GetNormal( HitPoint );
 		Normal = XMVector3Normalize( Normal );
 		bool bInside = false;
 		if ( XMVectorGetX( XMVector3Dot( RayDirection, Normal ) ) > 0 )
