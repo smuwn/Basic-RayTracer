@@ -154,7 +154,7 @@ public:
 		XMFLOAT3 hitPointXM;
 		DirectX::XMStoreFloat3( &hitPointXM, hitPoint );
 
-		if ( isPointInTriangle( V0, V1, V2, hitPointXM ) )
+		if ( isPointInTriangle( V0, V1, V2, hitPointXM ) && r.mLength > t )
 		{
 			r.mLength = t;
 			return true;
